@@ -68,14 +68,69 @@ Resources:
       Description: Prod Stage
       DeploymentId: !Ref Deployment
       ApiId: !Ref WebSocketApi
-  ConnectionsTable:
+  ####
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: dynamodbAccessRole
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - dynamodb:*
+              Resource: "*"
+            - Effect: Allow
+              Action:
+              - logs:*
+              Resource: "*"
+  InitFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: >
+          const AWS = require("aws-sdk");
+          const response = require("cfn-response");
+          const docClient = new AWS.DynamoDB.DocumentClient();
+          exports.handler = function(event, context) {
+              console.log(JSON.stringify(event,null,2));
+              var params = {
+                TableName: event.ResourceProperties.DynamoTableName,
+                Item:{
+                    "word": "salut"
+                }
+            };
+          docClient.put(params, function(err, data) { if (err) {
+            response.send(event, context, "FAILED", {});
+          } else {
+            response.send(event, context, "SUCCESS", {});
+          }
+          });
+          };
+      Handler: index.handler
+      Role:
+        Fn::GetAtt: [ LambdaRole , "Arn" ]
+      Runtime:  nodejs12.x
+      Timeout: 60
+  WordsTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-      - AttributeName: "connectionId"
+      - AttributeName: "word"
         AttributeType: "S"
       KeySchema:
-      - AttributeName: "connectionId"
+      - AttributeName: "word"
         KeyType: "HASH"
       ProvisionedThroughput:
         ReadCapacityUnits: 5
@@ -83,6 +138,14 @@ Resources:
       SSESpecification:
         SSEEnabled: True
       TableName: !Ref TableName
+  InitializeDynamoDB:
+    Type: Custom::InitFunction
+    DependsOn: WordsTable
+    Properties:
+      ServiceToken:
+         Fn::GetAtt: [ InitFunction , "Arn" ]
+      DynamoTableName: !Ref TableName
+  ###
   DefaultMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -112,9 +175,9 @@ Resources:
       Principal: apigateway.amazonaws.com
 
 Outputs:
-  ConnectionsTableArn:
+  WordsTableArn:
     Description: "Connections table ARN"
-    Value: !GetAtt ConnectionsTable.Arn
+    Value: !GetAtt WordsTable.Arn
 
   DefaultMessageFunctionArn:
     Description: "DefaultMessage function ARN"
