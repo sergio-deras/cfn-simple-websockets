@@ -8,6 +8,12 @@ const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: 
 const { TABLE_NAME } = process.env;
 
 exports.handler = async event => {
+  return { 
+    statusCode: 200,
+    headers: {},
+    body: JSON.stringify({"message": "OK"})
+  };
+      /*
   let connectionData;
   
   try {
@@ -43,4 +49,5 @@ exports.handler = async event => {
   }
 
   return { statusCode: 200, body: 'Data sent.' };
+*/
 };
