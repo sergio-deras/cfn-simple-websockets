@@ -1,3 +1,7 @@
+# Pre-reqs
+* sam cli
+* aws cli
+
 # simple-websockets-chat-app
 
 This is the code and template for the simple-websocket-chat-app.  There are three functions contained within the directories and a SAM template that wires them up to a DynamoDB table and provides the minimal set of permissions needed to run the app:
@@ -27,8 +31,9 @@ If you prefer, you can install the [AWS SAM CLI](https://docs.aws.amazon.com/ser
 ```
 sam deploy --guided
 
-aws cloudformation describe-stacks \
-    --stack-name simple-websocket-chat-app --query 'Stacks[].Outputs'
+aws cloudformation describe-stacks --stack-name <stack-name> --query 'Stacks[].Outputs'
+aws cloudformation delete-stacks --stack-name <stack-name> 
+    
 ```
 
 **Note:** `.gitignore` contains the `samconfig.toml`, hence make sure backup this file, or modify your .gitignore locally.
