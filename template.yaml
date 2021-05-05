@@ -29,7 +29,7 @@ Resources:
       RouteKey: $default
       AuthorizationType: NONE
       OperationName: DefaultRoute
-      RouteResponseSelectionExpression: $default # new
+      RouteResponseSelectionExpression: $default
       Target: !Join
         - '/'
         - - 'integrations'
@@ -43,13 +43,13 @@ Resources:
       IntegrationUri: 
         Fn::Sub:
             arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DefaultMessageFunction.Arn}/invocations
-  DefaultRouteResponse: # new
+  DefaultRouteResponse: 
     Type: 'AWS::ApiGatewayV2::RouteResponse'
     Properties:
       RouteId: !Ref DefaultRoute
       ApiId: !Ref WebSocketApi
       RouteResponseKey: $default
-  DefaultIntegResponse: # new
+  DefaultIntegResponse: 
     Type: 'AWS::ApiGatewayV2::IntegrationResponse'
     Properties:
       IntegrationId: !Ref DefaultInteg
@@ -68,7 +68,6 @@ Resources:
       Description: Prod Stage
       DeploymentId: !Ref Deployment
       ApiId: !Ref WebSocketApi
-  ####
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -156,7 +155,6 @@ Resources:
     Properties:
       ServiceToken:
          Fn::GetAtt: [ InitFunction , "Arn" ]
-  ###
   DefaultMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
