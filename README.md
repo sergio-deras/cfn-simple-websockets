@@ -31,8 +31,9 @@ If you prefer, you can install the [AWS SAM CLI](https://docs.aws.amazon.com/ser
 ```
 sam deploy --guided
 
-aws cloudformation describe-stacks \
-    --stack-name simple-websocket-chat-app --query 'Stacks[].Outputs'
+aws cloudformation describe-stacks --stack-name <stack-name> --query 'Stacks[].Outputs'
+aws cloudformation delete-stacks --stack-name <stack-name> 
+    
 ```
 
 **Note:** `.gitignore` contains the `samconfig.toml`, hence make sure backup this file, or modify your .gitignore locally.
