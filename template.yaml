@@ -1,61 +1,73 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  simple-websockets-chat-app
+  web-socket-app
 
-  SAM Template for simple-websockets-chat-app that has the DynamoDB table and Lambda
-  functions needed to demonstrate the Websocket protocol on API Gateway.
+  Retrieve words using DynamoDB + Lambda + API Gateway (WebSockets).
 
 Parameters:
   TableName:
     Type: String
-    Default: 'simplechat_connections'
-    Description: (Required) The name of the new DynamoDB to store connection identifiers for each connected clients. Minimum 3 characters
+    Default: 'words_table'
+    Description: (Required) The name of the new DynamoDB. Minimum 3 characters
     MinLength: 3
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
     ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
 
 Resources:
-  SimpleChatWebSocket:
+  WebSocketApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: SimpleChatWebSocket
+      Name: WebSocketApi
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
-  SendRoute:
+  DefaultRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: sendmessage
+      ApiId: !Ref WebSocketApi
+      RouteKey: $default
       AuthorizationType: NONE
-      OperationName: SendRoute
+      OperationName: DefaultRoute
+      RouteResponseSelectionExpression: $default # new
       Target: !Join
         - '/'
         - - 'integrations'
-          - !Ref SendInteg
-  SendInteg:
+          - !Ref DefaultInteg
+  DefaultInteg:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref SimpleChatWebSocket
+      ApiId: !Ref WebSocketApi
       Description: Send Integration
       IntegrationType: AWS_PROXY
       IntegrationUri: 
         Fn::Sub:
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendMessageFunction.Arn}/invocations
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DefaultMessageFunction.Arn}/invocations
+  DefaultRouteResponse: # new
+    Type: 'AWS::ApiGatewayV2::RouteResponse'
+    Properties:
+      RouteId: !Ref DefaultRoute
+      ApiId: !Ref WebSocketApi
+      RouteResponseKey: $default
+  DefaultIntegResponse: # new
+    Type: 'AWS::ApiGatewayV2::IntegrationResponse'
+    Properties:
+      IntegrationId: !Ref DefaultInteg
+      IntegrationResponseKey: /200/
+      ApiId: !Ref WebSocketApi
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
-    - SendRoute
+    - DefaultRoute
     Properties:
-      ApiId: !Ref SimpleChatWebSocket
+      ApiId: !Ref WebSocketApi
   Stage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
       StageName: Prod
       Description: Prod Stage
       DeploymentId: !Ref Deployment
-      ApiId: !Ref SimpleChatWebSocket
+      ApiId: !Ref WebSocketApi
   ConnectionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -71,10 +83,10 @@ Resources:
       SSESpecification:
         SSEEnabled: True
       TableName: !Ref TableName
-  SendMessageFunction:
+  DefaultMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: sendmessage/
+      CodeUri: default/
       Handler: app.handler
       MemorySize: 256
       Runtime: nodejs12.x
@@ -89,14 +101,14 @@ Resources:
           Action:
           - 'execute-api:ManageConnections'
           Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/*'
-  SendMessagePermission:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
+  DefaultMessagePermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - SimpleChatWebSocket
+      - WebSocketApi
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref SendMessageFunction
+      FunctionName: !Ref DefaultMessageFunction
       Principal: apigateway.amazonaws.com
 
 Outputs:
@@ -104,10 +116,10 @@ Outputs:
     Description: "Connections table ARN"
     Value: !GetAtt ConnectionsTable.Arn
 
-  SendMessageFunctionArn:
-    Description: "SendMessage function ARN"
-    Value: !GetAtt SendMessageFunction.Arn
+  DefaultMessageFunctionArn:
+    Description: "DefaultMessage function ARN"
+    Value: !GetAtt DefaultMessageFunction.Arn
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
-    Value: !Join [ '', [ 'wss://', !Ref SimpleChatWebSocket, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]
+    Value: !Join [ '', [ 'wss://', !Ref WebSocketApi, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]
