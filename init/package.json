@@ -1,0 +1,15 @@
+{
+  "name": "send-word",
+  "version": "1.0.0",
+  "description": "default example for WebSockets on API Gateway",
+  "main": "src/app.js",
+  "author": "SAM CLI",
+  "license": "MIT",
+  "dependencies": {
+    "cfn-response": "^1.0.1"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.739.0",
+    "cfn-response": "^1.0.1"
+  }
+}
