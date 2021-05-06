@@ -5,6 +5,7 @@ Description: >
 
   "Retrieve a word" service using DynamoDB + Lambda + API Gateway (WebSockets).
 
+
 Parameters:
   TableName:
     Type: String
@@ -14,6 +15,7 @@ Parameters:
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
     ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+
 
 Resources:
   WebSocketApi:
@@ -70,8 +72,8 @@ Resources:
   Stage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
-      StageName: Prod
-      Description: Prod Stage
+      StageName: Dev
+      Description: Dev Stage
       DeploymentId: !Ref Deployment
       ApiId: !Ref WebSocketApi
 
