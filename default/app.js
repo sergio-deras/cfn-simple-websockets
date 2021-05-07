@@ -1,6 +1,6 @@
 const AWS       = require('aws-sdk');
 const docClient = new AWS.DynamoDB.DocumentClient();
-const tableName = process.env.TABLE_NAME;
+const tableName = process.env.DynamoTableName;
 
 const params = {
   TableName: tableName,

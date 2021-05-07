@@ -2,9 +2,16 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   api-web-socket-app
-
   "Retrieve a word" service using DynamoDB + Lambda + API Gateway (WebSockets).
 
+Globals:
+  Function:
+    Runtime: nodejs12.x
+    Handler: app.handler
+    MemorySize: 256
+    Environment:
+      Variables:
+        DynamoTableName: !Ref TableName
 
 Parameters:
   TableName:
@@ -15,7 +22,6 @@ Parameters:
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
     ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
-
 
 Resources:
   WebSocketApi:
@@ -78,31 +84,20 @@ Resources:
       ApiId: !Ref WebSocketApi
   
   WordsTable:
-    Type: AWS::DynamoDB::Table
+    Type: AWS::Serverless::SimpleTable
     Properties:
-      AttributeDefinitions:
-      - AttributeName: "word"
-        AttributeType: "S"
-      KeySchema:
-      - AttributeName: "word"
-        KeyType: "HASH"
+      TableName: !Ref TableName
+      PrimaryKey:
+        Name: "word"
+        Type: String
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      SSESpecification:
-        SSEEnabled: True
-      TableName: !Ref TableName
 
   InitFunct:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: init/
-      Handler: app.handler
-      MemorySize: 256
-      Runtime: nodejs12.x
-      Environment:
-        Variables:
-          DynamoTableName: !Ref TableName
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref TableName
@@ -118,14 +113,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: default/
-      Handler: app.handler
-      MemorySize: 256
-      Runtime: nodejs12.x
-      Environment:
-        Variables:
-          TABLE_NAME: !Ref TableName
       Policies:
-      - DynamoDBCrudPolicy:
+      - DynamoDBReadPolicy:
           TableName: !Ref TableName
       - Statement:
         - Effect: Allow
