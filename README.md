@@ -16,6 +16,14 @@ sam deploy [--no-confirm-changeset]
 aws cloudformation describe-stacks --stack-name <stack-name>  --query "Stacks[0].Outputs[?OutputKey=='WebSocketURI'].OutputValue" --output text
 ```
 
+## Test
+```
+mkdir test 
+cd test
+npm install wscat
+./node_modules/.bin/wscat -c <wss location>
+```
+
 ## Destroy stack
 ```
 aws cloudformation delete-stacks --stack-name <stack-name>    
